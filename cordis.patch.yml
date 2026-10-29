@@ -1,0 +1,8 @@
+# dsh-agent-bridge bundle patch: inserts the plugin row into the web roster.
+# Install: add a `link:` dependency and a `dsh.profile.bundles` entry to the profile
+# package.json (or run `dsh plugin --profile web add link:<this directory>`).
+- insert:
+    - id: agent-bridge
+      name: dsh-agent-bridge
+      config:
+        enabled: true

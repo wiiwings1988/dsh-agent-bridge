@@ -1,0 +1,93 @@
+.markdown {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--dsw-alias-label-primary);
+  overflow-wrap: anywhere;
+}
+
+.thinking,
+.tool {
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.toolTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: 12px;
+}
+
+.toolBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0 6px 20px;
+}
+
+.pre {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 280px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--dsw-alias-markdown-code-block, rgb(120 120 120 / 10%));
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.add {
+  color: var(--dsw-alias-state-success-primary, #1a7f37);
+}
+
+.del {
+  color: var(--dsw-alias-state-error-primary, #c0392b);
+}
+
+.err {
+  margin: 0;
+  color: var(--dsw-alias-state-error-primary, #c0392b);
+  font-size: 12px;
+}
+
+.todos {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-1, rgb(120 120 120 / 8%));
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.todoDone {
+  color: var(--dsw-alias-label-tertiary);
+  text-decoration: line-through;
+}
+
+.thumb {
+  max-width: 320px;
+  max-height: 200px;
+  object-fit: contain;
+  cursor: zoom-in;
+  align-self: flex-start;
+}
+
+.zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 70%);
+  cursor: zoom-out;
+}
+
+.zoom img {
+  max-width: 95vw;
+  max-height: 95vh;
+}

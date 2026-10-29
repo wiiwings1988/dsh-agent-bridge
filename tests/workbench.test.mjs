@@ -1,0 +1,211 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, readFileSync, existsSync, chmodSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import {
+  gitClone, gitWorktreeAction, gitWorktrees, browseDirs, fsAction, readImage, gitAction, gitBranches, gitCompare, gitDiff, gitDraftMessage, gitLog, gitRemote, gitShow, gitStatus, listDir, readText, TerminalManager, writeText,
+} from '../src/workbench.ts'
+
+const sh = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' })
+const fixture = () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wb-'))
+  sh(dir, 'init', '-q', '-b', 'main')
+  sh(dir, 'config', 'user.email', 't@example.com'); sh(dir, 'config', 'user.name', 'T')
+  writeFileSync(join(dir, 'a.txt'), 'one\n'); mkdirSync(join(dir, 'sub')); writeFileSync(join(dir, 'sub', 'b.txt'), 'bee\n')
+  sh(dir, 'add', '.'); sh(dir, 'commit', '-q', '-m', 'first')
+  return dir
+}
+
+test('files: list, read, write stay inside the directory', async () => {
+  const dir = fixture()
+  const names = (await listDir(dir, '.')).map(e => `${e.dir ? 'd' : 'f'}:${e.name}`)
+  assert.deepEqual(names, ['d:sub', 'f:a.txt'], 'directories first, .git hidden')
+  const file = await readText(dir, 'a.txt')
+  assert.equal(file.content, 'one\n')
+  await writeText(dir, 'a.txt', 'two\n', file.mtimeMs)
+  assert.equal(readFileSync(join(dir, 'a.txt'), 'utf8'), 'two\n')
+  await assert.rejects(readText(dir, '../../etc/hosts'), /outside/)
+  symlinkSync('/etc', join(dir, 'link'))
+  await assert.rejects(listDir(dir, 'link'), /outside/, 'a symlink out of the directory is refused')
+  await assert.rejects(writeText(dir, '../escape.txt', 'x', undefined), /outside/)
+  await writeText(dir, 'new.txt', 'fresh', undefined)
+  assert.equal(readFileSync(join(dir, 'new.txt'), 'utf8'), 'fresh')
+})
+
+test('files: a stale write is refused, binary and huge files are refused', async () => {
+  const dir = fixture()
+  const file = await readText(dir, 'a.txt')
+  writeFileSync(join(dir, 'a.txt'), 'changed elsewhere\n', { mode: 0o644 })
+  const later = new Date(Date.now() + 5000)
+  execFileSync('touch', ['-t', later.toISOString().replace(/[-:T]/g, '').slice(0, 12), join(dir, 'a.txt')])
+  await assert.rejects(writeText(dir, 'a.txt', 'mine', file.mtimeMs), /changed on disk/)
+  writeFileSync(join(dir, 'bin'), Buffer.from([1, 0, 2]))
+  await assert.rejects(readText(dir, 'bin'), /binary/)
+  writeFileSync(join(dir, 'big'), 'x'.repeat(1_000_001))
+  await assert.rejects(readText(dir, 'big'), /larger/)
+})
+
+test('git: status, diff, stage, commit, log, branches', async () => {
+  const dir = fixture()
+  assert.equal((await gitStatus(dir)).branch, 'main')
+  writeFileSync(join(dir, 'a.txt'), 'one\nadded\n'); writeFileSync(join(dir, 'new.txt'), 'n\n')
+  const status = await gitStatus(dir)
+  assert.deepEqual(status.changes.map(c => `${c.index}${c.worktree} ${c.path}`).sort(), [' M a.txt', '?? new.txt'])
+  assert.match(await gitDiff(dir, 'a.txt', false, false), /\+added/)
+  assert.match(await gitDiff(dir, 'new.txt', false, true), /\+n/)
+  await gitAction({ cwd: dir, action: 'stage', paths: ['a.txt', 'new.txt'] })
+  assert.deepEqual((await gitStatus(dir)).changes.map(c => c.index).sort(), ['A', 'M'])
+  assert.match(await gitDiff(dir, 'a.txt', true, false), /\+added/)
+  await gitAction({ cwd: dir, action: 'unstage', paths: ['new.txt'] })
+  assert.equal((await gitStatus(dir)).changes.find(c => c.path === 'new.txt').index, '?')
+  await assert.rejects(gitAction({ cwd: dir, action: 'commit', message: '  ' }), /empty/)
+  await gitAction({ cwd: dir, action: 'commit', message: 'second' })
+  assert.match(sh(dir, 'log', '--format=%s', '-1'), /second/)
+  assert.deepEqual((await gitLog(dir)).map(c => c.subject), ['second', 'first'])
+  await gitAction({ cwd: dir, action: 'checkout', branch: 'feature', create: true })
+  assert.deepEqual(await gitBranches(dir), { current: 'feature', branches: ['feature', 'main'] })
+  await assert.rejects(gitAction({ cwd: dir, action: 'checkout', branch: '--orphan' }), /invalid/)
+  assert.equal((await gitStatus(mkdtempSync(join(tmpdir(), 'nogit-')))).isRepo, false)
+})
+
+test('terminal: input reaches the shell, output comes back, secrets stay out, exit is reported', async () => {
+  process.env.FAKE_SECRET_API_KEY = 'must-not-leak'
+  const manager = new TerminalManager()
+  const dir = mkdtempSync(join(tmpdir(), 'term-'))
+  const id = manager.open(dir, 80, 24)
+  try {
+    let output = ''; let exit
+    manager.subscribe(id, (e) => { if ('data' in e) output += e.data; else exit = e.exit })
+    manager.input(id, 'echo "hi-$((6*7)) key=<$FAKE_SECRET_API_KEY>"; pwd -P\n')
+    for (let i = 0; i < 400 && !output.includes('hi-42'); i++) await new Promise(r => setTimeout(r, 50))
+    assert.match(output, /hi-42 key=<>/)
+    assert.match(output, new RegExp(execFileSync('realpath', [dir], { encoding: 'utf8' }).trim()))
+    manager.resize(id, 100, 30)
+    manager.input(id, 'exit 7\n')
+    for (let i = 0; i < 400 && exit === undefined; i++) await new Promise(r => setTimeout(r, 50))
+    assert.equal(exit, 7)
+  } finally {
+    manager.closeAll()
+  }
+})
+
+test('git: discard restores tracked files, deletes untracked ones, and drops an added file', async () => {
+  const dir = fixture()
+  writeFileSync(join(dir, 'a.txt'), 'changed\n'); writeFileSync(join(dir, 'u.txt'), 'u\n'); writeFileSync(join(dir, 'added.txt'), 'x\n')
+  sh(dir, 'add', 'added.txt')
+  await gitAction({ cwd: dir, action: 'discard', paths: ['a.txt', 'u.txt', 'added.txt'] })
+  assert.equal(readFileSync(join(dir, 'a.txt'), 'utf8'), 'one\n')
+  assert.equal(existsSync(join(dir, 'u.txt')), false)
+  assert.equal(existsSync(join(dir, 'added.txt')), false)
+  assert.deepEqual((await gitStatus(dir)).changes, [])
+})
+
+test('git: remote flow (publish, push, fetch, pull, ahead/behind), branch delete, undo last commit, init', async () => {
+  const bare = mkdtempSync(join(tmpdir(), 'bare-'))
+  execFileSync('git', ['init', '-q', '--bare', '-b', 'main', bare])
+  const dir = fixture()
+  assert.deepEqual((await gitRemote(dir)).remotes, [])
+  await assert.rejects(gitAction({ cwd: dir, action: 'publish' }), /no remote/)
+  sh(dir, 'remote', 'add', 'origin', bare)
+  await gitAction({ cwd: dir, action: 'publish' })
+  let remote = await gitRemote(dir)
+  assert.equal(remote.upstream, 'origin/main'); assert.equal(remote.ahead, 0)
+  writeFileSync(join(dir, 'a.txt'), 'two\n'); sh(dir, 'commit', '-q', '-am', 'local')
+  assert.equal((await gitRemote(dir)).ahead, 1)
+  await gitAction({ cwd: dir, action: 'push' })
+  assert.equal((await gitRemote(dir)).ahead, 0)
+  // a second clone pushes a commit; this one fetches (behind 1) and pulls
+  const other = mkdtempSync(join(tmpdir(), 'other-'))
+  execFileSync('git', ['clone', '-q', bare, other])
+  sh(other, 'config', 'user.email', 'o@example.com'); sh(other, 'config', 'user.name', 'O')
+  writeFileSync(join(other, 'o.txt'), 'o\n'); sh(other, 'add', '.'); sh(other, 'commit', '-q', '-m', 'from other'); sh(other, 'push', '-q')
+  await gitAction({ cwd: dir, action: 'fetch' })
+  assert.equal((await gitRemote(dir)).behind, 1)
+  await gitAction({ cwd: dir, action: 'pull' })
+  assert.equal(existsSync(join(dir, 'o.txt')), true)
+  assert.equal((await gitRemote(dir)).behind, 0)
+  // commit and branch comparison
+  const log = await gitLog(dir)
+  assert.match((await gitShow(dir, log[0].hash)).diff, /o\.txt/)
+  await assert.rejects(gitShow(dir, '--output=/tmp/x'), /invalid/)
+  await gitAction({ cwd: dir, action: 'checkout', branch: 'side', create: true })
+  writeFileSync(join(dir, 's.txt'), 's\n'); sh(dir, 'add', '.'); sh(dir, 'commit', '-q', '-m', 'side work')
+  const compare = await gitCompare(dir, 'main', 'side')
+  assert.deepEqual(compare.files, ['s.txt'])
+  // undo the last commit keeps its changes staged
+  await gitAction({ cwd: dir, action: 'undoLastCommit' })
+  assert.deepEqual((await gitStatus(dir)).changes.map(c => `${c.index}${c.worktree} ${c.path}`), ['A  s.txt'])
+  sh(dir, 'commit', '-q', '-m', 'side again')
+  await gitAction({ cwd: dir, action: 'checkout', branch: 'main' })
+  await assert.rejects(gitAction({ cwd: dir, action: 'deleteBranch', branch: 'side' }), /not fully merged/)
+  await gitAction({ cwd: dir, action: 'deleteBranch', branch: 'side', force: true })
+  assert.deepEqual((await gitBranches(dir)).branches, ['main'])
+  // init + initial commit in a plain directory
+  const plain = mkdtempSync(join(tmpdir(), 'plain-')); writeFileSync(join(plain, 'f.txt'), 'f\n')
+  await gitAction({ cwd: plain, action: 'init' })
+  sh(plain, 'config', 'user.email', 'p@example.com'); sh(plain, 'config', 'user.name', 'P')
+  await gitAction({ cwd: plain, action: 'initialCommit' })
+  assert.deepEqual((await gitLog(plain)).map(c => c.subject), ['Initial commit'])
+})
+
+test('git: commit message draft goes through the configured executable, refuses an empty stage', async () => {
+  const dir = fixture()
+  const script = join(mkdtempSync(join(tmpdir(), 'fakeclaude-')), 'claude')
+  writeFileSync(script, '#!/bin/sh\ncat >/dev/null\nprintf "feat: drafted message\\n"\n'); chmodSync(script, 0o755)
+  await assert.rejects(gitDraftMessage(dir, script), /nothing is staged/)
+  writeFileSync(join(dir, 'a.txt'), 'x\n'); sh(dir, 'add', 'a.txt')
+  assert.equal(await gitDraftMessage(dir, script), 'feat: drafted message')
+})
+
+test('files: create, rename, delete, upload, image preview and directory browsing stay inside the directory', async () => {
+  const dir = fixture()
+  await fsAction({ cwd: dir, action: 'create', path: 'new/deep/x.txt', kind: 'file' })
+  assert.equal(existsSync(join(dir, 'new/deep/x.txt')), true)
+  await fsAction({ cwd: dir, action: 'create', path: 'folder', kind: 'dir' })
+  await assert.rejects(fsAction({ cwd: dir, action: 'create', path: 'folder', kind: 'dir' }), /already exists/)
+  await fsAction({ cwd: dir, action: 'rename', path: 'a.txt', to: 'folder/renamed.txt' })
+  assert.equal(readFileSync(join(dir, 'folder/renamed.txt'), 'utf8'), 'one\n')
+  await assert.rejects(fsAction({ cwd: dir, action: 'rename', path: 'folder/renamed.txt', to: 'sub/b.txt' }), /already exists/)
+  await assert.rejects(fsAction({ cwd: dir, action: 'rename', path: 'folder/renamed.txt', to: '../out.txt' }), /invalid name/)
+  await assert.rejects(fsAction({ cwd: dir, action: 'delete', path: '.' }), /session directory/)
+  await assert.rejects(fsAction({ cwd: dir, action: 'delete', path: '../' }), /invalid name/)
+  await fsAction({ cwd: dir, action: 'delete', path: 'new' })
+  assert.equal(existsSync(join(dir, 'new')), false)
+  await fsAction({ cwd: dir, action: 'upload', path: 'folder', name: 'up.bin', base64: Buffer.from([1, 2, 3]).toString('base64') })
+  assert.deepEqual([...readFileSync(join(dir, 'folder/up.bin'))], [1, 2, 3])
+  await assert.rejects(fsAction({ cwd: dir, action: 'upload', path: 'folder', name: '../evil', base64: 'AA==' }), /invalid name/)
+  await assert.rejects(fsAction({ cwd: dir, action: 'upload', path: 'folder', name: 'up.bin', base64: 'AA==' }), /already exists/)
+  writeFileSync(join(dir, 'p.png'), Buffer.from('89504e470d0a1a0a', 'hex'))
+  const image = await readImage(dir, 'p.png')
+  assert.equal(image.mime, 'image/png'); assert.equal(Buffer.from(image.base64, 'base64').length, 8)
+  await assert.rejects(readImage(dir, 'sub/b.txt'), /not an image/)
+  const browsed = await browseDirs(dir)
+  assert.deepEqual(browsed.dirs, ['folder', 'sub'])
+  assert.equal(browsed.parent !== undefined, true)
+})
+
+test('worktrees: list, create next to the repository, merge, remove; clone from a local repository', async () => {
+  const dir = fixture()
+  assert.deepEqual((await gitWorktrees(dir)).map(w => [w.main, w.branch]), [[true, 'main']])
+  const created = await gitWorktreeAction({ cwd: dir, action: 'create', branch: 'feat/wt' })
+  assert.ok(created.path.endsWith('-worktrees/feat-wt'), created.path)
+  assert.equal(existsSync(join(created.path, 'a.txt')), true)
+  const listed = await gitWorktrees(dir)
+  assert.deepEqual(listed.map(w => [w.main, w.branch]), [[true, 'main'], [false, 'feat/wt']])
+  // work done in the linked worktree is merged back from the main one
+  writeFileSync(join(created.path, 'wt.txt'), 'w\n'); sh(created.path, 'add', '.'); sh(created.path, 'commit', '-q', '-m', 'in worktree')
+  await gitWorktreeAction({ cwd: dir, action: 'merge', branch: 'feat/wt' })
+  assert.equal(existsSync(join(dir, 'wt.txt')), true)
+  await assert.rejects(gitWorktreeAction({ cwd: dir, action: 'remove', path: dir }), /not a linked worktree/)
+  await assert.rejects(gitWorktreeAction({ cwd: dir, action: 'create', branch: '--evil' }), /invalid/)
+  await gitWorktreeAction({ cwd: dir, action: 'remove', path: created.path })
+  assert.equal(existsSync(created.path), false)
+  const parent = mkdtempSync(join(tmpdir(), 'clone-'))
+  const cloned = await gitClone(dir, parent, 'copy')
+  assert.equal(existsSync(join(cloned.path, 'a.txt')), true)
+  await assert.rejects(gitClone(dir, parent, 'copy'), /already exists/)
+  await assert.rejects(gitClone('--upload-pack=x', parent, 'x'), /unsupported/)
+  await assert.rejects(gitClone(dir, parent, '../x'), /invalid folder name/)
+})

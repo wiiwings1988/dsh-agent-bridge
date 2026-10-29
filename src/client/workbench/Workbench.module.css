@@ -1,0 +1,357 @@
+.terminalWrap, .files, .git {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 8px 16px 16px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+}
+
+.terminal {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1, transparent);
+  overflow: hidden;
+}
+
+.files {
+  flex-direction: row;
+  gap: 12px;
+}
+
+.treeRoot, .tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.treeRoot {
+  width: 260px;
+  flex: none;
+  overflow: auto;
+  border-right: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+}
+
+.node {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 3px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node:hover, .nodeOpen {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.editor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editorBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.path {
+  flex: 1;
+  font-family: var(--ds-font-family-code, monospace);
+  color: var(--dsw-alias-label-secondary, inherit);
+}
+
+.textarea, .commitBox, .git input, .git select {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base, transparent);
+  padding: 6px 10px;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.gitBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.gitCols {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.4fr);
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.git h3 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.changes, .log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.letter {
+  width: 16px;
+  text-align: center;
+  font-family: var(--ds-font-family-code, monospace);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.changePath {
+  flex: 1;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commitBox {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 12px 0 6px;
+  resize: vertical;
+}
+
+.log li {
+  padding: 2px 0;
+}
+
+.notice {
+  margin: 4px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.error {
+  margin: 4px 0;
+  color: var(--dsw-alias-state-error, #d9534f);
+  font-size: 12px;
+}
+
+.terminal :global(.xterm-viewport) {
+  background-color: transparent !important;
+}
+
+.terminal :global(.xterm-screen canvas) {
+  background: transparent;
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+
+.treeCol {
+  width: 270px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+}
+
+.treeCol .treeRoot {
+  width: auto;
+  border-right: 0;
+  flex: 1;
+}
+
+.fileTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding-bottom: 6px;
+}
+
+.fileTools input {
+  font: inherit;
+  width: 140px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base, transparent);
+  color: inherit;
+  padding: 2px 8px;
+}
+
+.cm {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+}
+
+.imagePane {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8px;
+}
+
+.imagePane img {
+  max-width: 100%;
+  background: repeating-conic-gradient(rgb(128 128 128 / 20%) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+}
+
+.terminalTabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 8px 16px 16px;
+  box-sizing: border-box;
+}
+
+.termBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 6px;
+}
+
+.termTab, .termTabActive {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+}
+
+.termTabActive {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.termTab button, .termTabActive button {
+  font: inherit;
+  font-size: 12px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.termPane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.termPane[hidden] {
+  display: none;
+}
+
+.termPane > div {
+  flex: 1;
+  padding: 0;
+}
+
+.extensions {
+  height: 100%;
+  overflow: auto;
+  padding: 8px 16px 24px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.extensions h3 {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rows li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.form input, .form select, .form textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base, transparent);
+  padding: 4px 8px;
+}
+
+.form textarea {
+  flex-basis: 100%;
+}

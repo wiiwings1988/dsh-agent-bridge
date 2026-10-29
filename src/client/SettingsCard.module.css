@@ -1,0 +1,78 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+}
+
+.card h4 {
+  margin: 18px 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card input:not([type='checkbox']) {
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
+  margin-left: auto;
+  padding: 6px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2, var(--dsw-alias-border-l3));
+  border-radius: 8px;
+  background: var(--dsw-specific-input-major);
+  color: inherit;
+  font: inherit;
+}
+
+.card input[type='checkbox'] {
+  margin: 0;
+}
+
+.card button {
+  align-self: flex-end;
+  padding: 4px 14px;
+  border: 0.5px solid var(--dsw-alias-border-l2, var(--dsw-alias-border-l3));
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.card button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.card li button {
+  align-self: center;
+}
+
+.card [data-testid='ext-screen-status'] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--dsw-alias-label-secondary);
+}

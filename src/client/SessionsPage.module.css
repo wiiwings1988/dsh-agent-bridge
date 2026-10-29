@@ -1,0 +1,134 @@
+.page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+}
+
+/* Drawn as the core sidebar column it stands in for: same surface, row height and states. */
+.list {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 280px;
+  min-height: 0;
+  background: var(--dsw-specific-sidebar-fill);
+}
+
+/* The window controls sit over the top-left corner while the core sidebar is collapsed on macOS. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 52px;
+  padding: 0 12px;
+  padding-inline-start: max(12px, var(--dsh-frame-leading-clearance, 0px));
+  font-weight: 600;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--dsw-radius-md, 8px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.back:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 12px 8px;
+  padding: 6px 8px;
+  border-radius: var(--dsw-radius-md, 8px);
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+}
+
+.tree {
+  flex: 1;
+  margin: 0;
+  padding: 0 12px 12px;
+  overflow: auto;
+  list-style: none;
+}
+
+.folder,
+.item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 8px;
+  border-radius: var(--dsw-radius-md, 8px);
+  cursor: pointer;
+}
+
+.folder {
+  margin-top: 6px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.item[aria-level='2'] {
+  padding-left: 22px;
+}
+
+.folder:hover,
+.item:hover,
+.selected {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.selected {
+  font-weight: 500;
+}
+
+.caret {
+  width: 12px;
+  font-size: 10px;
+}
+
+.itemTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.age {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary, var(--dsw-alias-label-secondary));
+  font-size: 12px;
+}
+
+.empty {
+  margin: 8px 16px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}

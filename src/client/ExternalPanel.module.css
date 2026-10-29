@@ -1,0 +1,737 @@
+/* Session page laid out like the DSH conversation page (ui-conversation ConversationRoot, InputBar,
+   ui-chat MessageItem): a 76px header with the title row and tab strip, a centred content column
+   of the DSH width, and a docked composer card. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+}
+
+.shell [hidden] {
+  display: none;
+}
+
+.topbar {
+  flex: none;
+  box-sizing: border-box;
+  min-height: 76px;
+  padding: 10px 28px 0 20px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.topbar:not(:has(nav)) {
+  min-height: 0;
+  padding-bottom: 10px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+}
+
+.titleCluster {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.titleCluster .meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.headerActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.iconButton:hover,
+.iconButton[aria-pressed='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.renameInput {
+  width: 220px;
+}
+
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 36px;
+  margin-top: 10px;
+  padding-left: 8px;
+}
+
+.tab,
+.tabActive {
+  position: relative;
+  padding: 0 0 9px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.tab::after,
+.tabActive::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.tabActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.tabActive::after {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.searchRow {
+  flex: none;
+  padding: 8px 20px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.workbench {
+  flex: 1;
+  min-height: 0;
+}
+
+.pane {
+  height: 100%;
+}
+
+/* The scrollport. Its inline size is the width axis of the column and the composer, with the DSH
+   rule: 64% of the column, at least 680px and at most 920px, never wider than the column minus
+   the composer's 16px side clearance on each side. */
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  container-type: inline-size;
+  --ext-content-width: min(calc(100cqw - 32px), clamp(680px, 64cqw, 920px));
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+  width: var(--ext-content-width);
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+/* Native controls inside the transcript and the small editors keep one plain look; the composer
+   card and the header use their own DSH-styled controls instead. */
+.column button:not([class*="button"]),
+.column input,
+.column textarea,
+.goalSet input,
+.renameInput,
+.customModel,
+.searchRow input,
+.meta input,
+.schedule input {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base, transparent);
+  padding: 4px 10px;
+}
+
+.column button:not([class*="button"]) {
+  cursor: pointer;
+}
+
+.column button:not([class*="button"]):hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.column button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.meta {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: 12px;
+}
+
+.summary {
+  margin: 4px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.userRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.userBody {
+  box-sizing: border-box;
+  max-width: min(calc(var(--ext-content-width) * 0.702), 82%);
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: var(--dsw-specific-bubble);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+}
+
+.assistantBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stale {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--dsw-alias-state-warn-tertiary, rgb(255 180 0 / 15%));
+  font-size: 13px;
+}
+
+.card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-layer-1, rgb(120 120 120 / 10%));
+}
+
+.cardTitle {
+  flex-basis: 100%;
+  margin: 0;
+  font-weight: 600;
+}
+
+.input {
+  flex-basis: 100%;
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: 12px;
+}
+
+.fieldset {
+  flex-basis: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.option {
+  display: block;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.error {
+  margin: 0;
+  color: var(--dsw-alias-state-error-primary, #c0392b);
+  font-size: 13px;
+}
+
+.goal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1, rgb(60 140 255 / 12%));
+  border-left: 3px solid var(--dsw-alias-brand-primary, #3c8cff);
+}
+
+.goalSet {
+  display: flex;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.goalSet input {
+  flex: 1;
+}
+
+/* Docked composer: sticks to the bottom of the scrollport, fading the transcript out above it. */
+.composer {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 12px 16px 8px;
+  background: linear-gradient(transparent, var(--dsw-alias-bg-base, #fff) 12px);
+}
+
+.composerStack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: calc(var(--ext-content-width) + 32px);
+  margin: 0 auto;
+}
+
+/* The DSH InputBar card: text on top, a toolbar row below. */
+.composerCard {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding-top: 8px;
+  border: 0;
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l2);
+  border-radius: 22px;
+  background: var(--dsw-specific-input-major);
+  box-shadow: var(--dsw-elevation-soft);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+}
+
+.composerCard .chips {
+  padding: 2px 12px 0;
+}
+
+.text {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  max-height: 336px;
+  margin: 0;
+  padding: 4px 12px 0 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  caret-color: var(--dsw-alias-state-business-primary);
+  font: inherit;
+  resize: none;
+  field-sizing: content;
+}
+
+.text::placeholder {
+  color: var(--dsw-alias-label-caption);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 2px 8px 6px;
+}
+
+.tools,
+.trailing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tools {
+  flex-wrap: wrap;
+}
+
+.trailing {
+  flex: none;
+  margin-left: auto;
+}
+
+.add {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.add:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.select {
+  max-width: 220px;
+  height: 28px;
+  padding: 0 20px 0 8px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 12px 12px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+}
+
+.select:hover,
+.chip:hover,
+.chip[aria-pressed='true'] {
+  background-color: var(--dsw-alias-interactive-bg-hover);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.customModel {
+  width: 160px;
+  font-size: 13px;
+}
+
+.primary {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: var(--dsw-alias-button-info-fill);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 100ms ease;
+  transform: translateY(-2px);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--dsw-alias-button-info-hover);
+}
+
+.primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.chips img {
+  height: 28px;
+  border-radius: 4px;
+}
+
+.chips button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.slashMenu {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1, canvas);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.slashMenu button {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.slashMenu button:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.slashMenu small {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.search input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.searchHits {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1, canvas);
+}
+
+.searchHits button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.searchHits button:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.searchHits small {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dirPicker {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--dsw-alias-border-l2, rgb(120 120 120 / 35%));
+  border-radius: 8px;
+}
+
+.dirList {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.dirList button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.dirList button:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgb(120 120 120 / 12%));
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+
+.schedule {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.scheduled {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scheduled li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Message action rows, as under dsh messages: user actions trail the bubble, reply actions lead. */
+.userActions,
+.messageActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.userActions {
+  justify-content: flex-end;
+}
+
+.messageActions {
+  margin-top: 4px;
+}
+
+.iconButton:hover:not(:disabled),
+.iconTool:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.iconTool {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.iconTool[aria-pressed='true'] {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* The model and effort pickers sit beside send, in the dsh model trigger's regular weight. */
+.trailing .select {
+  font-weight: 400;
+}
+
+.trailing {
+  gap: 4px;
+}
+
+/* The message actions are icon buttons, not the boxed native buttons the column styles. */
+.column button.iconButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.column button.iconButton:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
